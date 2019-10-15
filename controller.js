@@ -186,30 +186,25 @@ async function listImagePathsAsync(token,path){
     body: {"path":path}
   }
 
-  try{
-    //Make request to Dropbox to get list of files
-    let result = await rp(options);
+  //Make request to Dropbox to get list of files
+  let result = await rp(options);
 
-    //Filter response to images only
-    let entriesFiltered= result.entries.filter(function(entry){
-      return entry.path_lower.search(/\.(gif|jpg|jpeg|tiff|png)$/i) > -1;
-    });        
+  //Filter response to images only
+  let entriesFiltered= result.entries.filter(function(entry){
+    return entry.path_lower.search(/\.(gif|jpg|jpeg|tiff|png)$/i) > -1;
+  });
 
-    //Get an array from the entries with only the path_lower fields
-    var paths = entriesFiltered.map(function (entry) {
-      return entry.path_lower;
-    });
+  //Get an array from the entries with only the path_lower fields
+  var paths = entriesFiltered.map(function (entry) {
+    return entry.path_lower;
+  });
 
-    //return a cursor only if there are more files in the current folder
-    let response= {};
-    response.paths= paths;
-    if(result.hasmore) response.cursor= result.cursor;        
-    return response;
-
-  }catch(error){
-    return next(new Error('error listing folder. '+error.message));
-  }        
-} 
+  //return a cursor only if there are more files in the current folder
+  let response= {};
+  response.paths= paths;
+  if(result.hasmore) response.cursor= result.cursor;
+  return response;
+}
 
 
 //Returns an array with temporary links from an array with file paths
