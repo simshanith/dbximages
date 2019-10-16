@@ -1,3 +1,6 @@
+var flatMap = require('array.prototype.flatmap');
+flatMap.shim()
+
 var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
