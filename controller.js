@@ -183,7 +183,7 @@ async function listImagePathsAsync(token,path){
     headers:{"Authorization":"Bearer "+token},
     method: 'POST',
     json: true ,
-    body: {"path":path}
+    body: {"path":path, recursive: true}
   }
 
   try{
