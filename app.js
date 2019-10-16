@@ -29,7 +29,7 @@ app.use(helmet());
 app.use(helmet.contentSecurityPolicy({
   directives: {
     defaultSrc: ["'self'"],
-    scriptSrc: ["'self'","https://ajax.googleapis.com/"],
+    scriptSrc: ["'self'","https://ajax.googleapis.com/", "https://unpkg.com/"],
     styleSrc: ["'self'"], 
     imgSrc: ["'self'","https://dl.dropboxusercontent.com"],  
     mediaSrc: ["'none'"],  
