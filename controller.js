@@ -194,8 +194,10 @@ async function getImagesInFolder(token, path) {
     return getImagesInFolder(token, path_lower)
   }))
 
-  nested.unshift(result.entries);
-  return nested.flatMap(getImageEntries)
+  nested.unshift(getImageEntries(result.entries));
+  return nested.reduce((memo, arr) => {
+    return [...memo, ...arr]
+  }, [])
 }
 
 
