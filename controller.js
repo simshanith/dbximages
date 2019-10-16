@@ -24,6 +24,7 @@ module.exports.home = async (req,res,next)=>{
       }    
 
     }catch(error){
+      console.error(error);
       return next(new Error("Error getting images from Dropbox"));
     }
 
