@@ -14,10 +14,10 @@ module.exports.home = async (req,res,next)=>{
   if(token){
     try{
 
-      let paths = await getLinksAsync(token); 
+      const { images, folders } = await getLinksAsync(token);
 
-      if(paths.length>0){
-        res.render('gallery', { imgs: paths, layout:false});
+      if(images.length + folders.length >0){
+        res.render('gallery', { imgs: images, folders, layout:false});
       }else{
         //if no images, ask user to upload some
         res.render('empty', {layout:false});
@@ -30,6 +30,26 @@ module.exports.home = async (req,res,next)=>{
 
   }else{
     res.redirect('/login');
+  }
+}
+
+module.exports.subfolder = async (req, res, next) => {
+  const token = req.session.token;
+  if (!token) {
+    // todo redirect back to subfolder on successful login
+    return res.redirect('/login')
+  }
+
+  try {
+    const subfolderPath = req.params.subfolder
+    if (!subfolderPath) {
+      return res.redirect('/')
+    }
+    const { images, folders } = await getLinksAsync(token, '/'+subfolderPath);
+    res.render('gallery', { imgs: images, folders, layout:false});
+  }catch(error){
+    console.error(error);
+    return next(new Error("Error getting images from Dropbox"));
   }
 }
 
@@ -151,53 +171,61 @@ function destroySessionAsync(req){
   });
 }
 
-
-
 /*Gets temporary links for a set of files in the root folder of the app
 It is a two step process:
 1.  Get a list of all the paths of files in the folder
 2.  Fetch a temporary link for each file in the folder */
-async function getLinksAsync(token){
+async function getLinksAsync(token, path = ''){
 
   //List images from the root of the app folder
-  let paths= await listImagePathsAsync(token,'');
+  const { images, folders }= await listImagePathsAsync(token, path);
 
   //Get a temporary link for each of those paths returned
-  let temporaryLinkResults= await getTemporaryLinksForPathsAsync(token,paths);
+  let temporaryLinkResults= await getTemporaryLinksForPathsAsync(token,images);
 
   //Construct a new array only with the link field
   var temporaryLinks = temporaryLinkResults.map(function (entry) {
     return entry.link;
   });
 
-  return temporaryLinks;
+  return {
+    images: temporaryLinks,
+    folders,
+  };
 }
 
 
-/* Returns an array with the path_lower of each image file */
-async function listImagePathsAsync(token,path){
-  const imageEntries = await getImagesInFolder(token, path)
-  return imageEntries.map(({ path_lower }) => path_lower)
-}
-
-async function getImagesInFolder(token, path) {
-  const options={
-    url: config.DBX_API_DOMAIN + config.DBX_LIST_FOLDER_PATH, 
+async function listFolder(token, path) {
+  return rp({
+    url: config.DBX_API_DOMAIN + config.DBX_LIST_FOLDER_PATH,
     headers:{"Authorization":"Bearer "+token},
     method: 'POST',
-    json: true ,
+    json: true,
     body: {"path":path}
-  }
-  const result = await rp(options)
-  const folderEntries = getFolderEntries(result.entries)
-  const nested = await Promise.all(folderEntries.map(({ path_lower }) => {
-    return getImagesInFolder(token, path_lower)
-  }))
+  })
+}
 
-  nested.unshift(getImageEntries(result.entries));
-  return nested.reduce((memo, arr) => {
-    return [...memo, ...arr]
-  }, [])
+async function listImagePathsAsync(token,path){
+  const { entries } = await listFolder(token, path)
+  const folders = getFolderEntries(entries).map(({ path_lower }) => {
+    const folder = path_lower.replace(path, '')
+    return {
+      href: require('path').join('/subfolders', path_lower),
+      title: folder,
+    }
+  })
+
+  if (path.length > 1) {
+    const parent = require('path').dirname(path)
+    folders.unshift({
+      href: require('path').join('/subfolders', parent),
+      title: '..',
+    })
+  }
+  return {
+    images: getImageEntries(entries).map(({ path_lower }) => path_lower),
+    folders
+  }
 }
 
 

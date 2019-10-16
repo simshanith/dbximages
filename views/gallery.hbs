@@ -8,10 +8,26 @@
 	<link rel="stylesheet" href="/stylesheets/page.css">
 </head>
 <body>
+	{{#if imgs.length}}
 	<div class="galleria">
 		{{#each imgs}}
 		<img src="{{this}}">
 		{{/each}}
 	</div>
+	{{/if}}
+	{{#if folders.length}}
+	<nav class="subfolders">
+		<ul>
+			{{#each folders}}
+			<li>
+				<a href="{{this.href}}">
+					<i data-feather="folder"></i>
+					{{this.title}}
+				</a>
+			</li>
+			{{/each}}
+		</ul>
+	</nav>
+	{{/if}}
 </body>
 </html>
